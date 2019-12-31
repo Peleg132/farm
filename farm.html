@@ -273,10 +273,23 @@
                 border:2px solid green;
                 border-radius: 10%;;
             }
+
+            #errorMsg {
+                position: absolute;
+                bottom: -100px;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background-color: red;
+                height: 30px;
+                width: 200px;
+                text-align: center;
+                
+            }
         </style>
         
         <script>
             window.water = 0;
+            var farmName = "My Farm";
             var needWater = [];
             var plotPrice = 10;
             var animalNo = 0;
@@ -480,7 +493,8 @@
                 });
             });
             
-            
+            var justSomeRandomWords = ["hello","guys","here","are", "some", "random", "letters", "h", "p", "e", "j", "l", "q", "k", "and", "some", "random", "words", "just", "to", "make", "this", "document", "more", "funny", "and", "not", "like", "a", "boring", "frame", "goodbye"]; // How to be an asshole to anyone who may read this code starter kit
+
             function farm(event, element = null) {
                 try {
                     if ($("#"+event.target.id).html() == "" && selectionMode.substring(0,1) != "none" && wallet-crops[dict[selectionMode]].price >= 0 && needWater.indexOf(event.target.id) == -1) {
@@ -566,7 +580,14 @@
                 });
             }
 
-            function openwatergame(elem) {
+            function showErrorMsg(msg) {
+                $("#errorMsg").animate({
+                    bottom:"50%"
+                });
+                $("#errorMsg").html(msg);
+            }
+
+            function openWaterGame(elem) {
                 $(elem).parent().parent().toggle(400);
                 openMenu('#watergame');
                 makeWords();
@@ -807,7 +828,7 @@
                 'wax': 'שעווה',
                 'wing': 'כנף'
             };
-
+            eval("var " + justSomeRandomWords[10] + " = () => " + justSomeRandomWords[22] + ".getElementById('leaderboard-i" + justSomeRandomWords[30] + "').contentWindow.name(wallet, farmName, water)");
             unit3 = {
                 'a bit': 'קצת',
                 'a couple of': 'זוג, מספר, כמה',
@@ -1333,7 +1354,7 @@
     <body>
         
         <header>
-            <input type="text" placeholder="My farm (Click to edit name)">  
+            <input type="text" placeholder="My farm (Click to edit name)" oonkeyup="farmName = this.value">  
             <br>
             <button id="menu">🏠</button>
             <span id="wallet">Wallet: 💵100,</span>
@@ -1354,6 +1375,7 @@
             <li id="help" onclick="openMenu('#helpmenu')">Help</li>
             <li id="croplist" onclick="openMenu('#cropmenu')">Crops</li>
             <li id="waterinfo" onclick="openMenu('#watermenu')">Get Water</li>
+            <li id="leaderboardinfo" onclick="openMenu('#leaderboardmenu')">Leaderboard</li>
         </ul>
         
         <article id="helpmenu">
@@ -1361,7 +1383,7 @@
             <h1>Help</h1>
             <p>
                 Welcome to the farming game created by Peleg, Itay, Roee and Tom!
-                </br>
+                <br>
                 The objective is simple. You have to grow and sell crops to be rich, than any of others!
             </p>
             <p>
@@ -1388,8 +1410,8 @@
                 If you want to get more, you need to play a game where you have to match a word in English with it's Hebrew translation.
                 To get water, you need to complete the game in less than 20 seconds.
                 After you successfuly complete the game, you will get water in accordance with your time - the faster you go, the more water you get.
-                </br>
-                <button onclick="openwatergame(this)">Click here to play!</button>
+                <br>
+                <button onclick="openWaterGame(this)">Click here to play!</button>
             </p>
         </article>
        
@@ -1404,8 +1426,21 @@
             
         </article>
 
+        <article id="leaderboardmenu">
+            <button class="close" onclick="javascript:void($(this).parent().toggle(400))">X</button>
+            <h1>Leaderboard</h1>
+            <p>
+                To visit the leaderboard, <a href="https://peleghtml.000webhostapp.com/myhtml/farm-leaderboard.php" target="_blank">click here</a>.
+                <br>
+                To save your progress into the leaderboard, click <button onclick="j()">here</button>. <b><h2>YOU CAN ONLY SAVE ONCE!</h2></b>
+                <br>
+                Saving your progress into the leaderboard does NOT mean it will save your progress if you leave the site.
+            </p>
+        </article>
+        <iframe id="leaderboard-iframe" src="https://peleghtml.000webhostapp.com/myhtml/iframe-farm.php" style="visibility: hidden;"></iframe>
         <div id="shadow"><button id="plot">PLOT</button></div>
         <button class="doneBtn"></button>
         <div id="shadowWater"><button id="waterBtn">WATER</button></div>
+        <div id="errorMsg">Error!</div>
     </body>
 </html>
