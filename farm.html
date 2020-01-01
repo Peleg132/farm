@@ -270,20 +270,22 @@
                 display: inline-block;
                 background-color: darkgreen;
                 font-size: 30px;
-                border:2px solid green;
-                border-radius: 10%;;
+                border: 2px solid green;
+                border-radius: 15px;
             }
 
-            #errorMsg {
+            .errorMsg {
                 position: absolute;
                 bottom: -100px;
                 left: 50%;
                 transform: translate(-50%, -50%);
-                background-color: red;
+                background-color: lightgray;
+                color: red;
                 height: 30px;
-                width: 200px;
+                width: 400px;
                 text-align: center;
-                
+                line-height: 30px;
+                border-radius: 25px;
             }
         </style>
         
@@ -411,18 +413,22 @@
                        $("#wallet").html("Wallet: 💵" + wallet + ",");
                        $(this).html("<button onclick='javascript:void(farm(event, this))'class='field' id='field" + fields + "'></button>");
                     } else if(selectionMode.substring(0,6) == "decors") {
-                        if(wallet -decorations[dict[selectionMode.substring(6)]].price >= 0) {
+                        if(wallet - decorations[dict[selectionMode.substring(6)]].price >= 0) {
                             wallet -= decorations[dict[selectionMode.substring(6)]].price;
                             $("#wallet").html("Wallet: 💵" + wallet + ",");
                             $(this).html("<span style='font-size:" + decorations[dict[selectionMode.substring(6)]].size + "px'>" + selectionMode.substring(6) + "</span>");
+                        } else {
+                            showErrorMsg("You don't have enough cash to buy " + decorations[dict[selectionMode.substring(6)]] + "!", createErrorMsg());
                         }
                     } else if(this.firstChild != null && selectionMode == "water" && water > 0 && needWater.indexOf(this.firstChild.id) != -1) {
                         this.firstChild.style.backgroundColor = "#770000";
                         water -= 1;
                         needWater.splice(needWater.indexOf(this.firstChild.id), 1);
                         $("#water").html("Water: 🌊" + water);
+                    } else if(this.firstChild != null && selectionMode == "water" && water == 0 && needWater.indexOf(this.firstChild.id) != -1) {
+                        showErrorMsg("You don't have enough water to water this plot!", createErrorMsg());
                     } else if(selectionMode == "plotting" && !(plotPrice + 8) < wallet) {
-                        // Add a message that says you don't have enough cash
+                        showErrorMsg("You don't have enough cash to buy another plot!", createErrorMsg());
                     }
                 });
               
@@ -497,7 +503,7 @@
 
             function farm(event, element = null) {
                 try {
-                    if ($("#"+event.target.id).html() == "" && selectionMode.substring(0,1) != "none" && wallet-crops[dict[selectionMode]].price >= 0 && needWater.indexOf(event.target.id) == -1) {
+                    if ($("#"+event.target.id).html() == "" && selectionMode.substring(0,1) != "none" && wallet - crops[dict[selectionMode]].price >= 0 && needWater.indexOf(event.target.id) == -1) {
                         grow(event.target.id,crops[parseInt(dict[selectionMode])]);
                         wallet -= crops[dict[selectionMode]].price;
                         $("#wallet").html("Wallet: 💵" + wallet + ",");
@@ -506,6 +512,10 @@
                         $("#"+event.target.id).html("");
                         $("#" + event.target.id).css("background-color", "grey");
                         needWater.push(element.id);
+                    } else if($("#"+event.target.id).html() == "" && selectionMode.substring(0,1) != "none" && wallet - crops[dict[selectionMode]].price <= 0 && needWater.indexOf(event.target.id) == -1) {
+                        showErrorMsg("You don't have enough cash to buy " + crops[dict[selectionMode]].n + "!", createErrorMsg());
+                    } else if($("#"+event.target.id).html() == "" && selectionMode.substring(0,1) != "none" && wallet - crops[dict[selectionMode]].price >= 0 && needWater.indexOf(event.target.id) != -1) {
+                        showErrorMsg("You need to water this plot before being able to plant on it!", createErrorMsg());
                     }
                 } catch (e) {
                     $("#"+event.target.id).html("");
@@ -579,12 +589,32 @@
                     left:"20px",bottom:"30px"
                 });
             }
+            
+            function createErrorMsg() {
+                var elem = document.createElement("div");
+                elem.className = "errorMsg";
+                document.body.appendChild(elem);
+                return elem;
+            }
 
-            function showErrorMsg(msg) {
-                $("#errorMsg").animate({
+            function showErrorMsg(msg, element) {
+                $(element).animate({
                     bottom:"50%"
                 });
-                $("#errorMsg").html(msg);
+                $(element).html(msg);
+                var opacity = 1;
+                var time = 200;
+                var interval = setInterval((elem) => {
+                    opacity -= opacity <= 0.6 ? 0.1 : 0.01;
+                    if (opacity <= 0.8) {
+                        time = 1;
+                    }
+                    if (opacity <= 0) {
+                        clearInterval(interval);
+                        $(element).remove();
+                    }
+                    $(element).css("opacity", opacity);
+                }, time);
             }
 
             function openWaterGame(elem) {
@@ -602,7 +632,7 @@
                     document.getElementById("watergame").innerHTML = '<button class="close" onclick="javascript:void($(this).parent().toggle(400))">X</button><h1>You need to go faster! I believe in you!</h1>';
                 }
             }
-
+            
             var unit1 = {
                 'coat': 'מעיל',
                 'cover (n)': 'מכסה',
@@ -1441,6 +1471,6 @@
         <div id="shadow"><button id="plot">PLOT</button></div>
         <button class="doneBtn"></button>
         <div id="shadowWater"><button id="waterBtn">WATER</button></div>
-        <div id="errorMsg">Error!</div>
+        <!-- div id="errorMsg">Error!</!-- div> -->
     </body>
 </html>
