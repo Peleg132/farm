@@ -1,3 +1,18 @@
+<!-- 
+    Hello!
+    This game was made for a homework in my english class, but I might actually make it some real game.
+    Thanks for visiting here! I love people who visits the source code for pages they visit. 
+    This is a pure HTML, CSS & JavaScript game, so you basiclly can do whatever you want with the here with some understanding of JS. I can't really do something with it, you know?
+    Have fun!
+    TDL:
+        - Water plant
+        - Fertilizer(?)
+        - fertilized plots(?)
+        - upgrades to plots:
+            ~ Two-plant plots(?)
+            ~ 
+        -
+-->
 <!DOCTYPE html>
 <html>
     <head>
@@ -287,10 +302,32 @@
                 line-height: 30px;
                 border-radius: 25px;
             }
+
+            .waterPlantSpan {
+                color:white;
+                margin-left: 40%;
+                position: absolute;
+                top: 150px;
+            }
+            
+            .waterPlantButton {
+                background-color:gold;
+                border-bottom:2px solid green;
+                border-right:2px solid green;
+            }
         </style>
         
         <script>
-            window.water = 0;
+            if(document.cookie.indexOf('water') != -1) {
+                window.water = getCookie("water");
+                var water = getCookie("wallet");
+                $("#water").html("Water: 🌊" + water);
+                $("#wallet").html("Wallet: 💵" + wallet + ",");
+                
+            } else {
+                window.water = 0;
+                var wallet = 100;
+            }
             var farmName = "My Farm";
             var needWater = [];
             var plotPrice = 10;
@@ -302,7 +339,6 @@
             var crops = {};
             var selectionMode = "none";
             var fields = 0;
-            var wallet =100;
             var dict = {};
             var inventory = {};//fig name amount id
             var inventoryOpened = false;
@@ -387,7 +423,8 @@
             decorations[4] = new decoration("⛳","Golf pitch",350,30);
             decorations[5] = new decoration("🎁","Gift",500,20);
             decorations[6] = new decoration("⛄","Snow man",550,30);
-             
+            decorations[7] = new decoration("⛽","Water pump",550,40);
+
             $(document).ready(function() {
                 openMenu("#helpmenu");
                 
@@ -397,7 +434,7 @@
                 );
                 }
                 
-                for(rows = 0; rows < $("body").innerHeight() / 1; rows++) {
+                for(rows = 0; rows < 20 / 1; rows++) {
                     $("#gamearea").append("<tr></tr>");
                 }
                 
@@ -410,6 +447,7 @@
                        fields += 1;
                        wallet -= plotPrice;
                        plotPrice += parseInt(wallet / 7);
+                       $("#plotPrice").html("Plot price: " + plotPrice);
                        $("#wallet").html("Wallet: 💵" + wallet + ",");
                        $(this).html("<button onclick='javascript:void(farm(event, this))'class='field' id='field" + fields + "'></button>");
                     } else if(selectionMode.substring(0,6) == "decors") {
@@ -544,7 +582,8 @@
             
             function openShop()  {
                 if (!shopOpened) {
-                   $("body").append("<div class='shop'></div>");$(".shop").fadeOut();
+                   $("body").append("<div class='shop'></div>");
+                   $(".shop").fadeOut();
                 }
                 
                 shopOpened = true;
@@ -569,8 +608,12 @@
             
             function openDecor()  {
                 $("#list").html("");
-                for(let i in decorations) {
-                    $("#list").append(decorations[i].fig + ":<button onclick='javascript:void(selectDecors())' id='" + decorations[i].fig + "' >Select</button> Price: 💵" + decorations[i].price + "<br>");
+                for(var i in decorations) {
+                    if(decorations[i].fig == "⛽") {
+                        $("#list").append("<span class='waterPlantSpan'>⛽: <button onclick='buyCrops(\"waterPlant\")' class='waterPlantButton'>Select</button> Price: 🌊20 <img src='https://image.flaticon.com/icons/svg/189/189665.svg' width='17' height='17' onmouseover='toggleWaterPlantInfo(this)' onmouseout='toggleWaterPlantInfo(this)'></span>");
+                    } else {
+                        $("#list").append(decorations[i].fig + ":<button onclick='javascript:void(selectDecors())' id='" + decorations[i].fig + "' >Select</button> Price: 💵" + decorations[i].price + "<br>");
+                    }
                 }
             } 
             
@@ -578,7 +621,7 @@
                 $("#list").html("");
                 for(s = 0; s < Object.keys(crops).length; s++) {
                     $("#list").append(crops[s].fig + ": <button  id='c" + crops[s].fig + "'onclick='buyCrops(this.id.substring(1))'>Select</button> Price: 💵" + crops[s].price + "<br>");     
-                }
+                }    
             }
             
             function selectDecors() {
@@ -588,6 +631,9 @@
                 $(".doneBtn").animate({
                     left:"20px",bottom:"30px"
                 });
+                $("#shadowWater").animate({
+                        left:"-100px",bottom:"50px"
+                }); 
             }
             
             function createErrorMsg() {
@@ -617,9 +663,11 @@
                 }, time);
             }
 
-            function openWaterGame(elem) {
-                $(elem).parent().parent().toggle(400);
-                openMenu('#watergame');
+            function openWaterGame(elem, after = false) {
+                if(!after) {
+                    $(elem).parent().parent().toggle(400);
+                    openMenu('#watergame');
+                }
                 makeWords();
             }
 
@@ -627,10 +675,39 @@
                 if(time <= 20) {
                     water += parseInt(50/time);
                     document.getElementById("water").innerHTML = "Water: 🌊" + water;
-                    document.getElementById("watergame").innerHTML = '<button class="close" onclick="javascript:void($(this).parent().toggle(400))">X</button><h1>You did it in ' + time + ' Seconds! Well Done!</h1>';
+                    document.getElementById("watergame").innerHTML = '<button class="close" onclick="javascript:void($(this).parent().toggle(400))">X</button><h1>You did it in ' + time + ' Seconds! Well Done!</h1><br><button onclick="openWaterGame(this, true)">Click here to play!</button>';
                 } else {
-                    document.getElementById("watergame").innerHTML = '<button class="close" onclick="javascript:void($(this).parent().toggle(400))">X</button><h1>You need to go faster! I believe in you!</h1>';
+                    document.getElementById("watergame").innerHTML = '<button class="close" onclick="javascript:void($(this).parent().toggle(400))">X</button><h1>You need to go faster! I believe in you!</h1><br><button onclick="openWaterGame(this, true)">Click here to play!</button>';
                 }
+            }
+
+            function toggleWaterPlantInfo(e) {
+                if(!document.getElementById("waterPlantInfo")) {
+                    $(e).parent().append('<span id="waterPlantInfo"><br>This decoration will inscrease the amount of water you get from water game!</span>');
+                } else {
+                    $("#waterPlantInfo")[0].remove();
+                }
+            }
+
+            function getCookie(cname) {
+                var name = cname + "=";
+                var decodedCookie = decodeURIComponent(document.cookie);
+                var ca = decodedCookie.split(';');
+                for(var i = 0; i <ca.length; i++) {
+                    var c = ca[i];
+                    while (c.charAt(0) == ' ') {
+                        c = c.substring(1);
+                    }
+                    if (c.indexOf(name) == 0) {
+                        return c.substring(name.length, c.length);
+                    }
+                }
+                return "";
+            }
+
+            function saveCookies() {
+                document.cookie = ("wallet=" + wallet);
+                document.cookie = ("water=" + water);
             }
             
             var unit1 = {
@@ -915,7 +992,7 @@
                 'floor': 'רצפה, קומה',
                 'fountain': 'מזרקה',
                 'fresh': 'טרי',
-                'fruit': 'פירות',
+                'fruits': 'פירות',
                 'gather': 'לאסוף',
                 'grow': 'לגדול',
                 'heart': 'לב',
@@ -1318,7 +1395,7 @@
                             chosen = [];
                         }
                         if(words.length == 0) {
-                            document.getElementById("watergame").innerHTML = "You did it in " + ((new Date().getTime()) - time)/1000 + " Seconds.";
+                            document.getElementById("watergame").innerHTML = 'You did it in ' + ((new Date().getTime()) - time)/1000 + ' Seconds.<br><button onclick="openWaterGame(this, true)">Click here to play!</button>';
                             waterGameDone(((new Date().getTime()) - time)/1000);
                         }
                     });
@@ -1392,6 +1469,7 @@
             <button id="inventory">🏢Inventory</button>
             <button id="shop">🎪Shop</button>
             <button onclick="openMenu('#watermenu')">Get 🌊Water</button>
+            <span id="plotPrice">Plot price: 10</span>
         </header>
         
         <br><br>
@@ -1421,7 +1499,7 @@
                 Please note that the first plot costs 10 cash, and then the price inscreases by your current amount of cash divided by 7.
             </p>
             <p>
-                After some times your plants will be ready, then you can gather them by clicking on them. If you want to sell those crops open inventory and sell them on your desire.
+                After some time your plants will be ready, then you can gather them by clicking on them. If you want to sell those crops open inventory and sell them on your desire.
             </p>
             <p>
                 Once you have collected crops from a plot, it will turn grey, which means you need to water it. In order to water it, you need to click the "water" button at bottom left, then click on your grey plot.
@@ -1471,6 +1549,5 @@
         <div id="shadow"><button id="plot">PLOT</button></div>
         <button class="doneBtn"></button>
         <div id="shadowWater"><button id="waterBtn">WATER</button></div>
-        <!-- div id="errorMsg">Error!</!-- div> -->
     </body>
 </html>
