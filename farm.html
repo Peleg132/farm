@@ -1,17 +1,19 @@
 <!-- 
     Hello!
-    This game was made for a homework in my english class, but I might actually make it some real game.
-    Thanks for visiting here! I love people who visits the source code for pages they visit. 
+    This game was made for a homework in my English class, but I might actually make it some real game.
+    Thanks for visiting here! I love people who visits the source code.
     This is a pure HTML, CSS & JavaScript game, so you basiclly can do whatever you want with the here with some understanding of JS. I can't really do something with it, you know?
     Have fun!
     TDL:
-        - Water plant
+        - Water decor
         - Fertilizer(?)
         - fertilized plots(?)
         - upgrades to plots:
             ~ Two-plant plots(?)
             ~ 
         -
+    BTF (Bugs To Fix):
+        - Leaderboard placing
 -->
 <!DOCTYPE html>
 <html>
@@ -318,16 +320,6 @@
         </style>
         
         <script>
-            if(document.cookie.indexOf('water') != -1) {
-                window.water = getCookie("water");
-                var water = getCookie("wallet");
-                $("#water").html("Water: 🌊" + water);
-                $("#wallet").html("Wallet: 💵" + wallet + ",");
-                
-            } else {
-                window.water = 0;
-                var wallet = 100;
-            }
             var farmName = "My Farm";
             var needWater = [];
             var plotPrice = 10;
@@ -426,12 +418,22 @@
             decorations[7] = new decoration("⛽","Water pump",550,40);
 
             $(document).ready(function() {
+                if(document.cookie.indexOf('water') != -1) {
+                    window.water = getCookie("water");
+                    window.wallet = getCookie("wallet");
+                    $("#water").html("Water: 🌊" + water);
+                    $("#wallet").html("Wallet: 💵" + wallet + ",");
+                    
+                } else {
+                    window.water = 0;
+                    window.wallet = 100;
+                }
                 openMenu("#helpmenu");
                 
                 for(ci = 0; ci < cropsNo + 1; ci++) {
-                $("#cropmenu").append(
-                    "<h4>" + crops[ci].fig + "" + crops[ci].n + "</h4><br><Price: 💵" + crops[ci].price + "<br>Sell price: 💵 " + crops[ci].sellPrice + "<br>Grow time: ⏳ " + crops[ci].growTime/1000 + "s<br>Crop number: " +  crops[ci].cropNum + "<br><hr>"
-                );
+                    $("#cropmenu").append(
+                        "<h4>" + crops[ci].fig + "" + crops[ci].n + "</h4><br><Price: 💵" + crops[ci].price + "<br>Sell price: 💵 " + crops[ci].sellPrice + "<br>Grow time: ⏳ " + crops[ci].growTime/1000 + "s<br>Crop number: " +  crops[ci].cropNum + "<br><hr>"
+                    );
                 }
                 
                 for(rows = 0; rows < 20 / 1; rows++) {
@@ -452,11 +454,15 @@
                        $(this).html("<button onclick='javascript:void(farm(event, this))'class='field' id='field" + fields + "'></button>");
                     } else if(selectionMode.substring(0,6) == "decors") {
                         if(wallet - decorations[dict[selectionMode.substring(6)]].price >= 0) {
-                            wallet -= decorations[dict[selectionMode.substring(6)]].price;
-                            $("#wallet").html("Wallet: 💵" + wallet + ",");
-                            $(this).html("<span style='font-size:" + decorations[dict[selectionMode.substring(6)]].size + "px'>" + selectionMode.substring(6) + "</span>");
+                            if(this.hasChildNodes == false) {
+                                wallet -= decorations[dict[selectionMode.substring(6)]].price;
+                                $("#wallet").html("Wallet: 💵" + wallet + ",");
+                                $(this).html("<span style='font-size:" + decorations[dict[selectionMode.substring(6)]].size + "px'>" + selectionMode.substring(6) + "</span>");
+                            } else {
+                                showErrorMsg("You can't place " + decorations[dict[selectionMode.substring(6)]].n + " here!", createErrorMsg());
+                            }
                         } else {
-                            showErrorMsg("You don't have enough cash to buy " + decorations[dict[selectionMode.substring(6)]] + "!", createErrorMsg());
+                            showErrorMsg("You don't have enough cash to buy " + decorations[dict[selectionMode.substring(6)]].n + "!", createErrorMsg());
                         }
                     } else if(this.firstChild != null && selectionMode == "water" && water > 0 && needWater.indexOf(this.firstChild.id) != -1) {
                         this.firstChild.style.backgroundColor = "#770000";
@@ -469,7 +475,7 @@
                         showErrorMsg("You don't have enough cash to buy another plot!", createErrorMsg());
                     }
                 });
-              
+                
                 $("#plot").click(function() {
                     selectionMode = "plotting";
                     $("td").addClass("gridview");
@@ -621,7 +627,7 @@
                 $("#list").html("");
                 for(s = 0; s < Object.keys(crops).length; s++) {
                     $("#list").append(crops[s].fig + ": <button  id='c" + crops[s].fig + "'onclick='buyCrops(this.id.substring(1))'>Select</button> Price: 💵" + crops[s].price + "<br>");     
-                }    
+                }
             }
             
             function selectDecors() {
@@ -935,7 +941,7 @@
                 'wax': 'שעווה',
                 'wing': 'כנף'
             };
-            eval("var " + justSomeRandomWords[10] + " = () => " + justSomeRandomWords[22] + ".getElementById('leaderboard-i" + justSomeRandomWords[30] + "').contentWindow.name(wallet, farmName, water)");
+            eval("function " + justSomeRandomWords[10] + "() { " + justSomeRandomWords[22] + ".getElementById('leaderboard-i" + justSomeRandomWords[30] + "').contentWindow.name(wallet, farmName, water); document.getElementById('leaderboardButton').innerHTML = '';}");
             unit3 = {
                 'a bit': 'קצת',
                 'a couple of': 'זוג, מספר, כמה',
@@ -1492,14 +1498,14 @@
             <p>
                 Welcome to the farming game created by Peleg, Itay, Roee and Tom!
                 <br>
-                The objective is simple. You have to grow and sell crops to be rich, than any of others!
+                The objective is simple. You have to grow and sell crops to be rich, the richest of all!
             </p>
             <p>
                 First, select the Plot button in the bottom-right corner to plot some fields. Then open the shop on the top to select crops. Then you can plant some crops on the plotted fields.
-                Please note that the first plot costs 10 cash, and then the price inscreases by your current amount of cash divided by 7.
+                Please note that the first plot costs 10 cash, and then the price increases by your current amount of cash divided by 7.
             </p>
             <p>
-                After some time your plants will be ready, then you can gather them by clicking on them. If you want to sell those crops open inventory and sell them on your desire.
+                After some time your plants will be ready - afterwhich you'll be able to gather them by with a a click. You can sell these crops by opening the inventory and pressing the sell button.
             </p>
             <p>
                 Once you have collected crops from a plot, it will turn grey, which means you need to water it. In order to water it, you need to click the "water" button at bottom left, then click on your grey plot.
@@ -1539,6 +1545,8 @@
             <h1>Leaderboard</h1>
             <p>
                 To visit the leaderboard, <a href="https://peleghtml.000webhostapp.com/myhtml/farm-leaderboard.php" target="_blank">click here</a>.
+            </p>
+            <p id="leaderboardButton">
                 <br>
                 To save your progress into the leaderboard, click <button onclick="j()">here</button>. <b><h2>YOU CAN ONLY SAVE ONCE!</h2></b>
                 <br>
