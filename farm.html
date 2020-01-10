@@ -1,7 +1,7 @@
 <!-- 
     Hello!
-    This game was made for a homework in my English class, but I might actually make it some real game.
-    Thanks for visiting here! I love people who visits the source code.
+    This game was made for a homework in my english class, but I might actually make it some real game.
+    Thanks for visiting here! I love people who visits the source code for pages they visit. 
     This is a pure HTML, CSS & JavaScript game, so you basiclly can do whatever you want with the here with some understanding of JS. I can't really do something with it, you know?
     Have fun!
     TDL:
@@ -214,7 +214,7 @@
             ul {
                 z-index:200;
                 position:fixed;
-                top:-10px;
+                top: -10px;
                 left:-400px;
                 background-color:rgba(10,110,10,0.7);
                 width:100%;
@@ -317,12 +317,34 @@
                 border-bottom:2px solid green;
                 border-right:2px solid green;
             }
+            
+            .cookieMsg {
+                text-align: center;
+                position: absolute;
+                bottom: 0;
+                width: 100%;
+                height:70px;
+                line-height: 70px;
+                background-color: darkgrey;
+                color: white;
+                z-index: 1000;
+            }
+            
+            .cookieMsgBtn {
+                background-color: red;
+                border-radius: 25px;
+                height: 70%;
+                width: 100px;
+            }
         </style>
         
         <script>
+            var water;
+            var wallet;
+            var plotPrice;
+            var fields;
             var farmName = "My Farm";
             var needWater = [];
-            var plotPrice = 10;
             var animalNo = 0;
             var cropsNo = -1;
             var decNum = 0;
@@ -330,17 +352,18 @@
             var animals = {};
             var crops = {};
             var selectionMode = "none";
-            var fields = 0;
             var dict = {};
-            var inventory = {};//fig name amount id
+            var inventory = {};
             var inventoryOpened = false;
             var shopOpened = false;
+            var toDivideByTime = 50;
+            var allowCookies = false;
             
             function animal(n,fig,size,price,products) {
                 animalNo += 1;
                 this.n = n;
                 this.fig = fig;
-                this.size = size; //max 128
+                this.size = size;
                 this.price = size;
                 this.products = products;
                 getAnimalCount = function() {
@@ -415,18 +438,36 @@
             decorations[4] = new decoration("⛳","Golf pitch",350,30);
             decorations[5] = new decoration("🎁","Gift",500,20);
             decorations[6] = new decoration("⛄","Snow man",550,30);
-            decorations[7] = new decoration("⛽","Water pump",550,40);
+            decorations[7] = new decoration("⛽","Water pump", 550,40);
 
             $(document).ready(function() {
+                for(rows = 0; rows < 17; rows++) {
+                    $("#gamearea").append("<tr></tr>");
+                }
+                
+                for(cols = 0; cols < window.innerWidth / 40 + 1; cols++) {
+                    $("tr").append("<td></td>")
+                }
+                
                 if(document.cookie.indexOf('water') != -1) {
-                    window.water = getCookie("water");
-                    window.wallet = getCookie("wallet");
+                    water = parseInt(getCookie("water"));
+                    wallet = parseInt(getCookie("wallet"));
+                    plotPrice = parseInt(getCookie("plotPrice"));
+                    fields = parseInt(getCookie("fields"));
+                    sixthLine = document.getElementById("gamearea").children[5];
+                    for(let i = 5; i < fields + 5; i++) {
+                        sixthLine.children[i].innerHTML = "<button onclick='javascript:void(farm(event, this))'class='field' id='field" + i + "'></button>";
+                    }
                     $("#water").html("Water: 🌊" + water);
                     $("#wallet").html("Wallet: 💵" + wallet + ",");
-                    
+                    $("#plotPrice").html("Plot price: " + plotPrice);
+                    $("td").addClass("gridview");
+                    setTimeout(function () {$("td").removeClass("gridview").addClass("normalview"); }, 100)
                 } else {
-                    window.water = 0;
-                    window.wallet = 100;
+                    water = 0;
+                    wallet = 100;
+                    plotPrice = 10;
+                    fields = 0;
                 }
                 openMenu("#helpmenu");
                 
@@ -434,14 +475,6 @@
                     $("#cropmenu").append(
                         "<h4>" + crops[ci].fig + "" + crops[ci].n + "</h4><br><Price: 💵" + crops[ci].price + "<br>Sell price: 💵 " + crops[ci].sellPrice + "<br>Grow time: ⏳ " + crops[ci].growTime/1000 + "s<br>Crop number: " +  crops[ci].cropNum + "<br><hr>"
                     );
-                }
-                
-                for(rows = 0; rows < 20 / 1; rows++) {
-                    $("#gamearea").append("<tr></tr>");
-                }
-                
-                for(cols = 0; cols < $("body").innerWidth() / 40 + 1; cols++) {
-                    $("tr").append("<td></td>")
                 }
                 
                 $("td").click(function() {
@@ -454,10 +487,21 @@
                        $(this).html("<button onclick='javascript:void(farm(event, this))'class='field' id='field" + fields + "'></button>");
                     } else if(selectionMode.substring(0,6) == "decors") {
                         if(wallet - decorations[dict[selectionMode.substring(6)]].price >= 0) {
-                            if(this.hasChildNodes == false) {
-                                wallet -= decorations[dict[selectionMode.substring(6)]].price;
-                                $("#wallet").html("Wallet: 💵" + wallet + ",");
-                                $(this).html("<span style='font-size:" + decorations[dict[selectionMode.substring(6)]].size + "px'>" + selectionMode.substring(6) + "</span>");
+                            if(this.hasChildNodes() == false) {
+                                if (selectionMode.substring(6) == "⛽" && water >= 20) {
+                                    toDivideByTime += 7;
+                                    water -= 20;
+                                    wallet -= decorations[dict[selectionMode.substring(6)]].price;
+                                    $("#water").html("Water: 🌊" + water);
+                                    $("#wallet").html("Wallet: 💵" + wallet + ",");
+                                    $(this).html("<span style='font-size:" + decorations[dict[selectionMode.substring(6)]].size + "px'>" + selectionMode.substring(6) + "</span>");
+                                } else if(selectionMode.substring(6) == "⛽" && water < 20) {
+                                    showErrorMsg("You don't have enough water to buy " + decorations[dict[selectionMode.substring(6)]].n + "!", createErrorMsg());
+                                } else {
+                                    wallet -= decorations[dict[selectionMode.substring(6)]].price;
+                                    $("#wallet").html("Wallet: 💵" + wallet + ",");
+                                    $(this).html("<span style='font-size:" + decorations[dict[selectionMode.substring(6)]].size + "px'>" + selectionMode.substring(6) + "</span>");
+                                }
                             } else {
                                 showErrorMsg("You can't place " + decorations[dict[selectionMode.substring(6)]].n + " here!", createErrorMsg());
                             }
@@ -475,7 +519,7 @@
                         showErrorMsg("You don't have enough cash to buy another plot!", createErrorMsg());
                     }
                 });
-                
+              
                 $("#plot").click(function() {
                     selectionMode = "plotting";
                     $("td").addClass("gridview");
@@ -616,7 +660,7 @@
                 $("#list").html("");
                 for(var i in decorations) {
                     if(decorations[i].fig == "⛽") {
-                        $("#list").append("<span class='waterPlantSpan'>⛽: <button onclick='buyCrops(\"waterPlant\")' class='waterPlantButton'>Select</button> Price: 🌊20 <img src='https://image.flaticon.com/icons/svg/189/189665.svg' width='17' height='17' onmouseover='toggleWaterPlantInfo(this)' onmouseout='toggleWaterPlantInfo(this)'></span>");
+                        $("#list").append("<span class='waterPlantSpan'>⛽: <button onclick='javascript:void(selectDecors())' id='" + decorations[i].fig + "' class='waterPlantButton'>Select</button> Price: 🌊20, 💵550 <img src='https://image.flaticon.com/icons/svg/189/189665.svg' width='17' height='17' onmouseover='toggleWaterPlantInfo(this)' onmouseout='toggleWaterPlantInfo(this)'></span>");
                     } else {
                         $("#list").append(decorations[i].fig + ":<button onclick='javascript:void(selectDecors())' id='" + decorations[i].fig + "' >Select</button> Price: 💵" + decorations[i].price + "<br>");
                     }
@@ -627,7 +671,7 @@
                 $("#list").html("");
                 for(s = 0; s < Object.keys(crops).length; s++) {
                     $("#list").append(crops[s].fig + ": <button  id='c" + crops[s].fig + "'onclick='buyCrops(this.id.substring(1))'>Select</button> Price: 💵" + crops[s].price + "<br>");     
-                }
+                }    
             }
             
             function selectDecors() {
@@ -679,9 +723,9 @@
 
             function waterGameDone(time) {
                 if(time <= 20) {
-                    water += parseInt(50/time);
-                    document.getElementById("water").innerHTML = "Water: 🌊" + water;
-                    document.getElementById("watergame").innerHTML = '<button class="close" onclick="javascript:void($(this).parent().toggle(400))">X</button><h1>You did it in ' + time + ' Seconds! Well Done!</h1><br><button onclick="openWaterGame(this, true)">Click here to play!</button>';
+                    water += parseInt(toDivideByTime/time);
+                    $("#water").html("Water: 🌊" + water);
+                    document.getElementById("watergame").innerHTML = '<button class="close" onclick="javascript:void($(this).parent().toggle(400))">X</button><h1>You did it in ' + time + ' Seconds! Well Done!</h1><br>You got ' + parseInt(toDivideByTime/time) + ' water!<br><button onclick="openWaterGame(this, true)">Click here to play!</button>';
                 } else {
                     document.getElementById("watergame").innerHTML = '<button class="close" onclick="javascript:void($(this).parent().toggle(400))">X</button><h1>You need to go faster! I believe in you!</h1><br><button onclick="openWaterGame(this, true)">Click here to play!</button>';
                 }
@@ -714,7 +758,15 @@
             function saveCookies() {
                 document.cookie = ("wallet=" + wallet);
                 document.cookie = ("water=" + water);
+                document.cookie = ("plotPrice=" + plotPrice);
+                document.cookie = ("fields=" + fields);
             }
+            
+            var cookiesInterv = setInterval(function () {
+                if(allowCookies) {
+                    saveCookies();
+                }
+            }, 10000);
             
             var unit1 = {
                 'coat': 'מעיל',
@@ -1498,14 +1550,14 @@
             <p>
                 Welcome to the farming game created by Peleg, Itay, Roee and Tom!
                 <br>
-                The objective is simple. You have to grow and sell crops to be rich, the richest of all!
+                The objective is simple. You have to grow and sell crops to be rich, than any of others!
             </p>
             <p>
                 First, select the Plot button in the bottom-right corner to plot some fields. Then open the shop on the top to select crops. Then you can plant some crops on the plotted fields.
-                Please note that the first plot costs 10 cash, and then the price increases by your current amount of cash divided by 7.
+                Please note that the first plot costs 10 cash, and then the price inscreases by your current amount of cash divided by 7.
             </p>
             <p>
-                After some time your plants will be ready - afterwhich you'll be able to gather them by with a a click. You can sell these crops by opening the inventory and pressing the sell button.
+                After some time your plants will be ready, then you can gather them by clicking on them. If you want to sell those crops open inventory and sell them on your desire.
             </p>
             <p>
                 Once you have collected crops from a plot, it will turn grey, which means you need to water it. In order to water it, you need to click the "water" button at bottom left, then click on your grey plot.
@@ -1557,5 +1609,6 @@
         <div id="shadow"><button id="plot">PLOT</button></div>
         <button class="doneBtn"></button>
         <div id="shadowWater"><button id="waterBtn">WATER</button></div>
+        <div class="cookieMsg">We use cookies to improve your experience.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button class="cookieMsgBtn" onclick="$(this).parent().remove(); allowCookies = true;">allow cookies</button></div>
     </body>
 </html>
