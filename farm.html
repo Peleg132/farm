@@ -5,15 +5,15 @@
     This is a pure HTML, CSS & JavaScript game, so you basiclly can do whatever you want with the here with some understanding of JS. I can't really do something with it, you know?
     Have fun!
     TDL:
-        - Water decor
         - Fertilizer(?)
         - fertilized plots(?)
         - upgrades to plots:
             ~ Two-plant plots(?)
             ~ 
-        -
+        - Add net worth & sell price of crop to shop
+        - When selling, add button of "Sell all"
     BTF (Bugs To Fix):
-        - Leaderboard placing
+        - Words move in water game - make them stay where they are
 -->
 <!DOCTYPE html>
 <html>
@@ -434,11 +434,25 @@
             decorations[0]=  new decoration("💩","POO",30,15);
             decorations[1] = new decoration("🚩","Flag",80,25);
             decorations[2] = new decoration("📪","Post box",150,25);
-            decorations[3] = new decoration("⛽","Fuel shed",300,30);
+            decorations[3] = new decoration("🏧","ATM",300,30);
             decorations[4] = new decoration("⛳","Golf pitch",350,30);
             decorations[5] = new decoration("🎁","Gift",500,20);
             decorations[6] = new decoration("⛄","Snow man",550,30);
             decorations[7] = new decoration("⛽","Water pump", 550,40);
+
+    //  attempts to diable console & inspect changes {
+            $(document).keydown(function (event) {
+                if (event.keyCode == 123) { // Prevent F12
+                    return false;
+                } else if (event.ctrlKey && event.shiftKey && event.keyCode == 73) { // Prevent Ctrl+Shift+I        
+                    return false;
+                }
+            });
+            $(document).on("contextmenu", function (e) {        
+                e.preventDefault();
+            });
+
+    //  } 
 
             $(document).ready(function() {
                 for(rows = 0; rows < 17; rows++) {
@@ -478,7 +492,7 @@
                 }
                 
                 $("td").click(function() {
-                    if(selectionMode == "plotting" && (plotPrice + 8) < wallet && !this.hasChildNodes()) {
+                    if(selectionMode == "plotting" && (plotPrice + 7) < wallet && !this.hasChildNodes()) {
                        fields += 1;
                        wallet -= plotPrice;
                        plotPrice += parseInt(wallet / 7);
@@ -486,15 +500,19 @@
                        $("#wallet").html("Wallet: 💵" + wallet + ",");
                        $(this).html("<button onclick='javascript:void(farm(event, this))'class='field' id='field" + fields + "'></button>");
                     } else if(selectionMode.substring(0,6) == "decors") {
-                        if(wallet - decorations[dict[selectionMode.substring(6)]].price >= 0) {
+                        if(wallet - decorations[dict[selectionMode.substring(6)]].price >= 7) {
                             if(this.hasChildNodes() == false) {
                                 if (selectionMode.substring(6) == "⛽" && water >= 20) {
-                                    toDivideByTime += 7;
+                                    if(wallet * 0.75 <= 550) {
+                                        wallet -= decorations[dict[selectionMode.substring(6)]].price;
+                                    } else {
+                                        wallet -= wallet * 0.75;
+                                    }
+                                    toDivideByTime += 5;
                                     water -= 20;
-                                    wallet -= decorations[dict[selectionMode.substring(6)]].price;
                                     $("#water").html("Water: 🌊" + water);
                                     $("#wallet").html("Wallet: 💵" + wallet + ",");
-                                    $(this).html("<span style='font-size:" + decorations[dict[selectionMode.substring(6)]].size + "px'>" + selectionMode.substring(6) + "</span>");
+                                    $(this).html("<span style='font-size:" + decorations[dict[selectionMode.substring(6)]].size + "px'>" + selectionMode.substring(6) + "</span>")
                                 } else if(selectionMode.substring(6) == "⛽" && water < 20) {
                                     showErrorMsg("You don't have enough water to buy " + decorations[dict[selectionMode.substring(6)]].n + "!", createErrorMsg());
                                 } else {
@@ -515,7 +533,7 @@
                         $("#water").html("Water: 🌊" + water);
                     } else if(this.firstChild != null && selectionMode == "water" && water == 0 && needWater.indexOf(this.firstChild.id) != -1) {
                         showErrorMsg("You don't have enough water to water this plot!", createErrorMsg());
-                    } else if(selectionMode == "plotting" && !(plotPrice + 8) < wallet) {
+                    } else if(selectionMode == "plotting" && !(plotPrice + 7) < wallet) {
                         showErrorMsg("You don't have enough cash to buy another plot!", createErrorMsg());
                     }
                 });
@@ -554,7 +572,7 @@
                     $(".inventory").slideToggle(500);
                     $(".inventory").html(" <button class='close' onclick='javascript:void($(this).parent().slideToggle(400))'>X</button>  <h1>Inventory</h1>");
                     for(j = 0; j < Object.keys(inventory).length; j++) {
-                      $(".inventory").append(inventory[j][0]+": "+inventory[j][2]+"<button onclick='sell(this.id.substring(4),10)' id='sell"+inventory[j][0]+"'>Sell</button><br>");
+                      $(".inventory").append(inventory[j][0]+": "+inventory[j][2]+"<button onclick='sell(this.id.substring(4))' id='sell"+inventory[j][0]+"'>Sell</button><br>");
                     }
                 });
                 
@@ -616,14 +634,19 @@
                 }, plant.growTime);
             }
             
-            function sell(product,n)  {
+            function sell(product, all = false)  {
                 if(inventory[crops[dict[product]].id][2]>0){
-                    wallet += crops[dict[product]].sellPrice;
-                    inventory[crops[dict[product]].id][2] -= n; 
+                    if(!all) {
+                        wallet += crops[dict[product]].sellPrice;
+                        inventory[crops[dict[product]].id][2] -= 10;
+                    } else {
+                        wallet += crops[dict[product]].sellPrice * (inventory[crops[dict[product]].id][2] / 10);
+                        inventory[crops[dict[product]].id][2] = 0;
+                    }
                     $(".inventory").html("<button class='close' onclick='javascript:void($(this).parent().slideToggle(400))'>X</button>  <h1>Inventory</h1>");
                     
                     for(a = 0; a < Object.keys(inventory).length; a++) {
-                        $(".inventory").append(inventory[a][0]+": "+inventory[a][2]+"<button onclick='sell(this.id.substring(4),10)' id='sell"+inventory[a][0]+"'>Sell</button><br>");
+                        $(".inventory").append(inventory[a][0]+": "+inventory[a][2]+"<button onclick='sell(this.id.substring(4))' id='sell"+inventory[a][0]+"'>Sell</button><button onclick='sell(this.id.substring(4),true)' id='sell"+inventory[a][0]+"'>Sell</button><br><br>");
                     }
                     
                     $("#wallet").html("Wallet: 💵" + wallet + ",");
@@ -767,6 +790,18 @@
                     saveCookies();
                 }
             }, 10000);
+
+            function deleteAllCookies() {
+                clearInterval(cookiesInterv);
+
+                var cookies = document.cookie.split(";");
+                for (var i = 0; i < cookies.length; i++) {
+                    var cookie = cookies[i];
+                    var eqPos = cookie.indexOf("=");
+                    var name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+                    document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT";
+                }
+            }
             
             var unit1 = {
                 'coat': 'מעיל',
@@ -1542,6 +1577,7 @@
             <li id="croplist" onclick="openMenu('#cropmenu')">Crops</li>
             <li id="waterinfo" onclick="openMenu('#watermenu')">Get Water</li>
             <li id="leaderboardinfo" onclick="openMenu('#leaderboardmenu')">Leaderboard</li>
+            <li id="resetinfo" onclick="openMenu('#reset')">Reset Game</li>
         </ul>
         
         <article id="helpmenu">
@@ -1601,10 +1637,17 @@
             <p id="leaderboardButton">
                 <br>
                 To save your progress into the leaderboard, click <button onclick="j()">here</button>. <b><h2>YOU CAN ONLY SAVE ONCE!</h2></b>
-                <br>
-                Saving your progress into the leaderboard does NOT mean it will save your progress if you leave the site.
             </p>
         </article>
+
+        <article id="reset">
+            <h1>Reset the Game</h1>
+            <p>
+                If you want to reset the game, click <button onclick="deleteAllCookies(); location.reload()">here</button>.
+                Note that resetting the game will make you loose all you did in it.
+            </p>
+        </article>
+
         <iframe id="leaderboard-iframe" src="https://peleghtml.000webhostapp.com/myhtml/iframe-farm.php" style="visibility: hidden;"></iframe>
         <div id="shadow"><button id="plot">PLOT</button></div>
         <button class="doneBtn"></button>
